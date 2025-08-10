@@ -470,3 +470,43 @@ def top_expenses(request):
 
     return Response(top_data)
 
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.db.models import Sum
+from django.db.models.functions import TruncDate, TruncWeek
+from .models import Expense
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def spend_trends(request):
+    """
+    Returns spending trends daily or weekly.
+    Query param: period=daily/weekly (default: daily)
+    """
+    period = request.GET.get("period", "daily").lower()
+
+    if period == "weekly":
+        trends = (
+            Expense.objects.filter(user=request.user)
+            .annotate(period=TruncWeek("date"))
+            .values("period")
+            .annotate(total_amount=Sum("amount"))
+            .order_by("period")
+        )
+    else:  # daily
+        trends = (
+            Expense.objects.filter(user=request.user)
+            .annotate(period=TruncDate("date"))
+            .values("period")
+            .annotate(total_amount=Sum("amount"))
+            .order_by("period")
+        )
+
+    # Format date as string
+    trends_list = [
+        {"period": t["period"].strftime("%Y-%m-%d"), "total_amount": t["total_amount"]}
+        for t in trends
+    ]
+
+    return Response(trends_list)

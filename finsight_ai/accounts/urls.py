@@ -6,7 +6,7 @@ from .views import ExpenseListCreateView, ExpenseDetailView, ReceiptUploadView
 from .views import ForecastView, TrendsView
 from .views import RecommendationView, AlertView, HeatmapView
 from .views import RecurringExpenseListCreateView, RecurringExpenseDetailView
-from .views import CategoryAnalyticsView,top_expenses
+from .views import CategoryAnalyticsView,top_expenses,spend_trends
 
 
 urlpatterns = [
@@ -26,6 +26,7 @@ urlpatterns = [
     path('recurring-expenses/<int:id>/', RecurringExpenseDetailView.as_view(), name='recurring-expenses-detail'),
     path('analytics/category/', CategoryAnalyticsView.as_view(), name='category-analytics'),
     path("top-expenses/", top_expenses, name="top-expenses"),
+    path("trends/", spend_trends, name="spend-trends"),
 
 
 ]

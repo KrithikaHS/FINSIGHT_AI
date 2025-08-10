@@ -1,0 +1,123 @@
+/* Full-page layout */
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #4a90e2, #9013fe);
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Card container */
+.auth-card {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 40px;
+  width: 350px;
+  color: #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.6s ease-in-out;
+}
+
+/* Titles */
+.auth-card h2 {
+  text-align: center;
+  margin-bottom: 25px;
+  font-weight: 600;
+  font-size: 1.8rem;
+}
+
+/* Error message */
+.auth-error {
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+/* Form labels */
+.auth-card label {
+  display: block;
+  margin-bottom: 12px;
+}
+
+/* Field label text */
+.auth-card label span {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* Inputs */
+.auth-card input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 6px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.auth-card input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Buttons */
+.auth-card button {
+  width: 100%;
+  padding: 12px;
+  background: #4a90e2;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 10px;
+  transition: background 0.3s ease;
+}
+
+.auth-card button:hover {
+  background: #357ab8;
+}
+
+/* Alternate button colors */
+.auth-card button.green {
+  background: #28a745;
+}
+
+.auth-card button.green:hover {
+  background: #1e7e34;
+}
+
+/* Bottom link text */
+.auth-card p {
+  text-align: center;
+  font-size: 14px;
+  margin-top: 15px;
+}
+
+.auth-card p a {
+  color: #ffd700;
+  text-decoration: none;
+}
+
+.auth-card p a:hover {
+  text-decoration: underline;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
