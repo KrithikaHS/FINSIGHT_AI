@@ -1,12 +1,12 @@
 import {
-    CategoryScale,
-    Chart as ChartJS,
-    Legend,
-    LinearScale,
-    LineElement,
-    PointElement,
-    Title,
-    Tooltip
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Title,
+  Tooltip
 } from "chart.js";
 import { useEffect, useState } from "react";
 import { Line } from "react-chartjs-2";
@@ -18,15 +18,35 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 export default function SpendTrends() {
   const [period, setPeriod] = useState("daily");
   const [trendData, setTrendData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  const fetchTrends = async (selectedPeriod) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getSpendTrends(selectedPeriod);
+      // Ensure data is an array of { period: string, total_amount: number }
+      if (!Array.isArray(data)) {
+        throw new Error("Invalid data format from API");
+      }
+      setTrendData(data);
+    } catch (err) {
+      console.error("Error fetching spend trends:", err);
+      setError("Failed to load spend trends. Please try again later.");
+      setTrendData([]); // reset to empty to avoid chart crash
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch on mount & whenever period changes
   useEffect(() => {
-    getSpendTrends(period)
-      .then(data => setTrendData(data))
-      .catch(err => console.error("Error fetching spend trends:", err));
+    fetchTrends(period);
   }, [period]);
 
-  const labels = trendData.map(item => item.period);
-  const amounts = trendData.map(item => item.total_amount);
+  const labels = trendData.map(item => item.period || "N/A");
+  const amounts = trendData.map(item => Number(item.total_amount) || 0);
 
   const chartData = {
     labels,
@@ -44,6 +64,7 @@ export default function SpendTrends() {
   return (
     <div className="spend-trends-container">
       <h2 className="analytics-title">Spending Trends</h2>
+
       <div className="trend-toggle">
         <button
           className={period === "daily" ? "active" : ""}
@@ -58,7 +79,14 @@ export default function SpendTrends() {
           Weekly
         </button>
       </div>
-      <Line data={chartData} />
+
+      {loading && <p>Loading {period} trends...</p>}
+      {error && <p className="error-message">{error}</p>}
+      {!loading && !error && trendData.length === 0 && <p>No data available for {period} trends.</p>}
+
+      {!loading && !error && trendData.length > 0 && (
+        <Line data={chartData} />
+      )}
     </div>
   );
 }

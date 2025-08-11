@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { login } from "../api";
+import { login, requestPasswordReset } from "../api"; // you will add requestPasswordReset
 import "../styles/Login_Signup.css";
 
 export default function Login() {
@@ -8,6 +8,8 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
+  const [forgotMode, setForgotMode] = useState(false);
+  const [resetMessage, setResetMessage] = useState("");
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -19,9 +21,48 @@ export default function Login() {
       localStorage.setItem("userEmail", email);
       nav("/");
     } catch (e) {
-      setErr(email,password)
       setErr(e.response?.data?.detail || "Login failed");
     }
+  }
+
+ async function handleForgotSubmit(e) {
+    e.preventDefault();
+    setErr("");
+    setResetMessage("");
+    try {
+      await requestPasswordReset({ email });  // pass as object with email key
+      setResetMessage("Password reset email sent! Check your inbox.");
+    } catch (e) {
+      setErr(e.response?.data?.error || "Failed to send reset email");
+    }
+  }
+
+  if (forgotMode) {
+    return (
+      <div className="auth-page">
+        <form onSubmit={handleForgotSubmit} className="auth-card">
+          <h2>Forgot Password</h2>
+          {err && <div className="auth-error">{err}</div>}
+          {resetMessage && <div className="auth-success">{resetMessage}</div>}
+
+          <label>
+            <span>Email</span>
+            <input
+              type="email"
+              placeholder="Enter your registered email"
+              required
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+            />
+          </label>
+
+          <button type="submit">Send Reset Email</button>
+          <p>
+            Remembered? <button type="button" onClick={() => setForgotMode(false)}>Back to login</button>
+          </p>
+        </form>
+      </div>
+    );
   }
 
   return (
@@ -37,7 +78,7 @@ export default function Login() {
             placeholder="Enter your email"
             required
             value={email}
-            onChange={e=>setEmail(e.target.value)}
+            onChange={e => setEmail(e.target.value)}
           />
         </label>
 
@@ -48,12 +89,15 @@ export default function Login() {
             placeholder="Enter your password"
             required
             value={password}
-            onChange={e=>setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
           />
         </label>
 
         <button type="submit">Sign in</button>
-        <p>New? <Link to="/signup">Create account</Link></p>
+        <p>
+          New? <Link to="/signup">Create account</Link> |{" "}
+          <button type="button" className="forgot-link" onClick={() => setForgotMode(true)}>Forgot Password?</button>
+        </p>
       </form>
     </div>
   );

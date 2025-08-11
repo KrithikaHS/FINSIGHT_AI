@@ -1,7 +1,7 @@
-// src/App.js
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
+import ResetPassword from "./pages/ResetPassword";
 import Signup from "./pages/Signup";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -11,6 +11,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
         <Route
           path="/"
           element={
@@ -19,7 +20,8 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/" />} />
+        {/* wildcard should be last */}
+        <Route path="*" element={<div>404 Not Found</div>} />
       </Routes>
     </div>
   );

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from accounts.views import signup
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import ExpenseListCreateView, ExpenseDetailView, ReceiptUploadView
+from .views import ExpenseListCreateView, ExpenseDetailView, ReceiptUploadView, change_password, profile_view, request_password_reset, reset_password_confirm, saving_potential
 from .views import ForecastView, TrendsView
 from .views import RecommendationView, AlertView, HeatmapView
 from .views import RecurringExpenseListCreateView, RecurringExpenseDetailView
@@ -27,6 +27,10 @@ urlpatterns = [
     path('analytics/category/', CategoryAnalyticsView.as_view(), name='category-analytics'),
     path("top-expenses/", top_expenses, name="top-expenses"),
     path("trends/", spend_trends, name="spend-trends"),
-
+    path("saving-potential/", saving_potential),
+    path("profile/", profile_view, name="profile"),
+    path("change-password/", change_password, name="change_password"),
+    path("request-password-reset/", request_password_reset, name="request_password_reset"),
+    path("reset-password/", reset_password_confirm, name="reset_password_confirm"),
 
 ]

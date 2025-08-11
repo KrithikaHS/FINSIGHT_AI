@@ -44,6 +44,20 @@ export async function login(email, password) {
   return res.data; // Expected { access, refresh, user }
 }
 
+// src/api.js
+export async function resetPassword(data) {
+  // data = { uid, token, new_password }
+  const res = await client.post("/reset-password/", data);
+  return res.data;
+}
+
+export async function requestPasswordReset(data) {
+  // data = { email }
+  const res = await client.post("/request-password-reset/", data);
+  return res.data;
+}
+
+
 // ---------------------- EXPENSES ----------------------
 
 export async function fetchExpenses(params = {}) {
@@ -157,6 +171,20 @@ export async function getSpendTrends(period = "daily") {
   const res = await client.get("/trends/", { params: { period } });
   return res.data;
 }
+
+export async function getSavingPotential(category, percentage = 10) {
+  const res = await client.get("/saving-potential/", {
+    params: { category, percentage }
+  });
+  return res.data;
+}
+
+
+export const getProfile = () => client.get("/profile/");
+
+export const updateProfile = (data) => client.put("/profile/", data);
+
+export const changePassword = (data) => client.post("/change-password/", data);
 
 
 export default client;

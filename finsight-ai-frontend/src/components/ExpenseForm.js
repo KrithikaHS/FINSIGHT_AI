@@ -59,8 +59,7 @@ const [preview, setPreview] = useState(null);
     <input
       required
       placeholder="Title (eg. Groceries)"
-      value={form.title}
-      onChange={e => setForm({ ...form, title: e.target.value })}
+      value={form.title.length === 0 ? "Expense" : form.title}      onChange={e => setForm({ ...form, title: e.target.value })}
       className="expense-form__input p-2 border rounded"
     />
     <input

@@ -8,6 +8,84 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .Serializers import MyTokenObtainPairSerializer
 
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework import status
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def request_password_reset(request):
+    email = request.data.get("email")
+    if not email:
+        return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        # Don't reveal user existence, respond with success message anyway
+        return Response({"message": "If this email exists, a reset link has been sent."})
+
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+    reset_link = f"http://localhost:3000/reset-password/{uid}/{token}/"
+
+    # Send email with reset link (update send_mail params as needed)
+    send_mail(
+        subject="Password Reset Request",
+        message=f"Click the link to reset your password: {reset_link}",
+        from_email="noreply@yourdomain.com",
+        recipient_list=[email],
+        fail_silently=False,
+    )
+
+    return Response({"message": "If this email exists, a reset link has been sent."})
+
+from django.contrib.auth.models import User
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth.password_validation import validate_password, ValidationError
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def reset_password_confirm(request):
+    uidb64 = request.data.get("uid")
+    token = request.data.get("token")
+    new_password = request.data.get("new_password")
+
+    if not all([uidb64, token, new_password]):
+        return Response({"error": "Invalid request"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = User.objects.get(pk=uid)
+    except (User.DoesNotExist, ValueError, TypeError, OverflowError):
+        return Response({"error": "Invalid token or user"}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not default_token_generator.check_token(user, token):
+        return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        validate_password(new_password, user)
+    except ValidationError as e:
+        return Response({"error": e.messages}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(new_password)
+    user.save()
+
+    return Response({"message": "Password has been reset successfully"})
+
+
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def signup(request):
@@ -20,6 +98,67 @@ def signup(request):
         print("Serializer errors:", serializer.errors)  # Debug print validation errors
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+from django.contrib.auth.models import User
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+
+@api_view(["GET", "PUT"])
+@permission_classes([IsAuthenticated])
+def profile_view(request):
+    """
+    GET - Return current user profile
+    PUT - Update profile (first_name, last_name only)
+    """
+    user = request.user
+
+    if request.method == "GET":
+        return Response({
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "email": user.email
+        })
+
+    elif request.method == "PUT":
+        user.first_name = request.data.get("first_name", user.first_name)
+        user.last_name = request.data.get("last_name", user.last_name)
+        # Don't allow changing username or email here
+        user.save()
+        return Response({"message": "Profile updated successfully"})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def change_password(request):
+    """
+    POST - Change user password
+    """
+    user = request.user
+    old_password = request.data.get("old_password")
+    new_password = request.data.get("new_password")
+    
+    if not user.check_password(old_password):
+        return Response({"error": "Old password is incorrect"}, status=status.HTTP_400_BAD_REQUEST)
+    print("until here")
+    try:
+        print("validate")
+        validate_password(new_password, user)
+    except ValidationError as e:
+        return Response({"error": e.messages}, status=status.HTTP_400_BAD_REQUEST)
+    print("aftervalidate")
+    user.set_password(new_password)
+    user.save()
+    print("Donebefore")
+    update_session_auth_hash(request, user)  # Keep user logged in
+    print("Done")
+    return Response({"message": "Password changed successfully"})
+
+
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
@@ -31,6 +170,8 @@ from rest_framework.views import APIView
 
 from .models import Expense
 from .Serializers import ExpenseSerializer
+
+
 
 class ExpenseListCreateView(generics.ListCreateAPIView):
     serializer_class = ExpenseSerializer
@@ -474,7 +615,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Sum
-from django.db.models.functions import TruncDate, TruncWeek
+from django.db.models.functions import TruncWeek
 from .models import Expense
 
 @api_view(["GET"])
@@ -486,27 +627,71 @@ def spend_trends(request):
     """
     period = request.GET.get("period", "daily").lower()
 
+    qs = Expense.objects.filter(user=request.user).exclude(date__isnull=True)
+
     if period == "weekly":
         trends = (
-            Expense.objects.filter(user=request.user)
-            .annotate(period=TruncWeek("date"))
-            .values("period")
-            .annotate(total_amount=Sum("amount"))
-            .order_by("period")
+            qs.annotate(period=TruncWeek("date"))
+              .values("period")
+              .annotate(total_amount=Sum("amount"))
+              .order_by("period")
         )
-    else:  # daily
+    else:  # daily — use date() instead of TruncDate for SQLite safety
         trends = (
-            Expense.objects.filter(user=request.user)
-            .annotate(period=TruncDate("date"))
-            .values("period")
-            .annotate(total_amount=Sum("amount"))
-            .order_by("period")
+            qs.values("date")
+              .annotate(total_amount=Sum("amount"))
+              .order_by("date")
         )
+        # Rename key for consistency
+        trends = [{"period": t["date"], "total_amount": t["total_amount"]} for t in trends]
 
-    # Format date as string
-    trends_list = [
-        {"period": t["period"].strftime("%Y-%m-%d"), "total_amount": t["total_amount"]}
-        for t in trends
-    ]
+    # Safely format
+    trends_list = []
+    for t in trends:
+        if t["period"]:
+            try:
+                period_str = t["period"].strftime("%Y-%m-%d")
+            except AttributeError:
+                # If SQLite returned a plain string instead of datetime
+                period_str = str(t["period"])
+        else:
+            period_str = None
+        trends_list.append({
+            "period": period_str,
+            "total_amount": float(t["total_amount"] or 0)
+        })
 
     return Response(trends_list)
+
+
+from django.utils.timezone import now
+from datetime import timedelta
+from django.db.models import Sum
+from .models import Expense
+from decimal import Decimal
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def saving_potential(request):
+    category = request.GET.get("category")
+    percentage = float(request.GET.get("percentage", 10))  # default 10%
+
+    if not category:
+        return Response({"error": "Category is required"}, status=400)
+
+    today = now().date()
+    first_day = today.replace(day=1)
+
+    total_spent = (
+        Expense.objects.filter(user=request.user, category=category, date__gte=first_day)
+        .aggregate(total=Sum("amount"))
+        .get("total") or 0
+    )
+
+    savings = total_spent * (Decimal(percentage) / Decimal("100"))
+
+    return Response({
+        "category": category,
+        "percentage": percentage,
+        "total_spent": total_spent,
+        "potential_savings": round(savings, 2)
+    })

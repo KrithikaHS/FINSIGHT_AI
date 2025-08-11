@@ -1,18 +1,19 @@
 
 import {
-    ArcElement,
-    BarElement,
-    CategoryScale,
-    Chart as ChartJS,
-    Legend,
-    LinearScale,
-    Title,
-    Tooltip
+  ArcElement,
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
+  Title,
+  Tooltip
 } from "chart.js";
 import { useEffect, useState } from "react";
 import { Bar, Pie } from "react-chartjs-2";
 import { getCategoryAnalytics } from "../api"; // ✅ Import API function
 import "../styles/components.css";
+import SavingPotentialCalculator from "./SavingPotentialCalculator"; // ✅ Import calculator
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
@@ -64,6 +65,14 @@ export default function CategoryAnalytics() {
           <h3>Bar Chart</h3>
           <Bar data={barData} />
         </div>
+      
+    {/* ✅ Add SavingPotentialCalculator with fetched categories */}
+      <div className="calculator-section">
+        <div className="chart-card">
+                  <SavingPotentialCalculator categories={categories} />
+
+        </div>
+      </div>
       </div>
     </div>
   );
