@@ -8,8 +8,11 @@ from .views import RecommendationView, AlertView, HeatmapView
 from .views import RecurringExpenseListCreateView, RecurringExpenseDetailView
 from .views import CategoryAnalyticsView,top_expenses,spend_trends
 from .views import BudgetOptimizationView
+from django.views.generic import TemplateView
 
 urlpatterns = [
+    path('', TemplateView.as_view(template_name='index.html')),
+
     path('admin/', admin.site.urls),
     path('signup/', signup, name="signup"),
     path('login/', TokenObtainPairView.as_view(), name='login'),
