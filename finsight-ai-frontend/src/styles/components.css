@@ -336,86 +336,196 @@ nav button:hover {
 
 /* BudgetPanel */
 
+/* Container: Two columns - table on left, inputs on right */
+.budget-manager {
+  display: flex;
+  gap: 2rem;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #1f2937; /* dark slate */
+  background: #f3f4f6; /* light gray bg */
+  border-radius: 12px;
+}
+
+/* Monthly Budget Section (right column) */
 .monthly-budget {
-  background-color: white;
-  padding: 1rem;
-  border-radius: 0.5rem; /* rounded */
-  box-shadow: 0 2px 6px rgb(0 0 0 / 0.1);
+  flex: 1 1 350px;
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* align inputs and labels right */
+  gap: 1.5rem;
 }
 
-.monthly-budget h3 {
-  font-weight: 600;
-  font-size: 1.125rem; /* font-semibold */
-}
-
-.monthly-budget .budget-amount {
-  margin-top: 0.75rem;
-  font-size: 1.5rem; /* text-2xl */
+/* Header */
+.monthly-budget__heading {
   font-weight: 700;
-}
-
-.monthly-budget .spent-amount {
-  font-size: 0.875rem; /* text-sm */
-  color: #64748b; /* slate-500 */
-}
-
-.monthly-budget .progress-bar {
+  font-size: 1.5rem;
   width: 100%;
-  height: 0.75rem; /* h-3 */
-  background-color: #f1f5f9; /* slate-100 */
-  border-radius: 0.375rem; /* rounded */
-  margin-top: 0.75rem;
+  /* text-align: right; */
+  margin-bottom: 1rem;
+}
+
+/* Amounts (budget and spent) on top */
+.monthly-budget__amounts {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 1.25rem;
+  color: #111827; /* darker */
+  margin-bottom: 1rem;
+}
+
+/* Progress bar container */
+.monthly-budget__progress-bar {
+  width: 100%;
+  background: #e5e7eb; /* light gray */
+  height: 10px;
+  border-radius: 10px;
   overflow: hidden;
 }
 
-.monthly-budget .progress-bar-fill {
-  height: 100%;
-  border-radius: 0.375rem;
+/* Progress bar fill */
+.monthly-budget__progress-bar-fill {
+  height: 10px;
+  border-radius: 10px;
   transition: width 0.3s ease;
 }
 
-.monthly-budget .progress-bar-fill.sky {
-  background-color: #0ea5e9; /* sky-500 */
-}
-
-.monthly-budget .progress-bar-fill.red {
-  background-color: #ef4444; /* red-500 */
-}
-
-.monthly-budget .input-group {
-  margin-top: 0.75rem;
-  display: flex;
-  gap: 0.5rem;
-}
-
-.monthly-budget input[type="number"] {
-  padding: 0.5rem;
-  border: 1px solid #cbd5e1; /* slate-300 */
-  border-radius: 0.375rem;
-  flex-grow: 1;
-  font-size: 1rem;
-}
-
-.monthly-budget button {
-  padding: 0.5rem 1rem;
-  background-color: #16a34a; /* emerald-600 */
-  color: white;
+/* Warning text */
+.monthly-budget__warning {
+  width: 100%;
+  text-align: right;
   font-weight: 600;
+  color: #b91c1c; /* red */
+  margin-top: 0.5rem;
+}
+
+/* Inputs container */
+.monthly-budget__input-group {
+  width: 100%;
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+
+/* Each input field wrapper */
+.monthly-budget__input-group > div {
+  width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+/* Labels aligned right */
+.monthly-budget__input-group label {
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  text-align: right;
+  width: 100%;
+  color: #374151; /* slate-700 */
+}
+
+/* Inputs */
+.monthly-budget__input-group input[type="number"] {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #d1d5db; /* gray-300 */
+  border-radius: 6px;
+  font-size: 1rem;
+  outline-offset: 2px;
+  transition: border-color 0.2s ease;
+}
+
+.monthly-budget__input-group input[type="number"]:focus {
+  border-color: #2563eb; /* blue-600 */
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
+/* Save button */
+.monthly-budget__input-group button {
+  background-color: #10b981; /* emerald-500 */
+  color: white;
+  padding: 0.5rem 1.5rem;
+  font-weight: 700;
+  font-size: 1rem;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.2s ease;
 }
 
-.monthly-budget button:hover {
-  background-color: #15803d; /* darker emerald */
+.monthly-budget__input-group button:hover {
+  background-color: #059669; /* emerald-600 */
 }
 
-.monthly-budget .warning-text {
-  margin-top: 0.5rem;
-  font-size: 0.875rem;
-  color: #b91c1c; /* red-600 */
+/* Budget optimizer section (left column) */
+.budget-optimizer {
+  /* flex: 2 1 600px; */
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
 }
+
+/* Budget optimizer heading */
+.budget-optimizer h3 {
+  font-weight: 700;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #111827; /* dark */
+}
+
+/* Table styles */
+.budget-optimizer table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+/* Table headers */
+.budget-optimizer th,
+.budget-optimizer td {
+  border: 1px solid #d1d5db; /* gray-300 */
+  padding: 0.75rem 1rem;
+  text-align: left;
+  vertical-align: middle;
+}
+
+/* Header background */
+.budget-optimizer th {
+  background-color: #f9fafb; /* gray-50 */
+  font-weight: 700;
+  color: #374151; /* slate-700 */
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/* Row hover highlight */
+.budget-optimizer tbody tr:hover {
+  background-color: #f3f4f6; /* gray-100 */
+}
+
+/* Status colors */
+.status-ok {
+  color: #10b981; /* emerald */
+  font-weight: 600;
+}
+
+.status-exceed {
+  color: #ef4444; /* red-500 */
+  font-weight: 700;
+}
+
 
 /* AlertsPanel */
 
@@ -1005,7 +1115,7 @@ body, html, #root {
 /* Row 2: top panels grid */
 .top-panels {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
 }
 
@@ -1242,6 +1352,34 @@ body, html, #root {
   margin-left: 10px;
 }
 /* ProfileManagement */
+
+.profile-btn {
+  background-color: #2563eb; /* blue-600 */
+  color: white;
+  font-weight: 600;
+  padding: 0.5rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  font-size: 1rem;
+  user-select: none;
+}
+
+.profile-btn:hover {
+  background-color: #1e40af; /* blue-800 */
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+}
+
+.profile-btn:focus {
+  outline: 2px solid #93c5fd; /* blue-300 */
+  outline-offset: 2px;
+}
+
+.profile-btn:active {
+  background-color: #1e3a8a; /* blue-900 */
+  box-shadow: none;
+}
 
 .profile-container {
   background: #fff;

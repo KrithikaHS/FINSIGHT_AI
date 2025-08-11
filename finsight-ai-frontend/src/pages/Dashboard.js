@@ -11,9 +11,11 @@ import Navbar from "../components/Navbar";
 import RecommendationBar from "../components/RecommendationBar";
 import RecurringExpenseForm from "../components/RecurringExpenseForm";
 import RecurringExpensesList from "../components/RecurringExpensesList";
+import SavingPotentialCalculator from "../components/SavingPotentialCalculator";
 import SpendTrends from "../components/SpendTrends";
 import TopExpenses from "../components/TopExpenses";
 import TrendsPanel from "../components/TrendsPanel";
+
 
 export default function Dashboard() {
   const [expenses, setExpenses] = useState([]);
@@ -56,12 +58,19 @@ export default function Dashboard() {
       <Navbar />
 
       {/* Row 2: Budget, Alerts, Recommendation, Spend Trends */}
-      <section className="top-panels">
+      <section>
         <BudgetPanel />
+      </section>
+      <section className="top-panels">
+        <section>
         <AlertsPanel />
         <RecommendationBar />
+        </section>
+        
         <SpendTrends />
+        <SavingPotentialCalculator/>
       </section>
+      
 
       {/* Row 3: Tabs + Expenses / Recurring */}
       <section className="expenses-tabs-section">

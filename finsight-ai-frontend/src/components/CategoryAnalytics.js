@@ -1,4 +1,3 @@
-
 import {
   ArcElement,
   BarElement,
@@ -7,36 +6,48 @@ import {
   Legend,
   LinearScale,
   Title,
-  Tooltip
+  Tooltip,
 } from "chart.js";
 import { useEffect, useState } from "react";
 import { Bar, Pie } from "react-chartjs-2";
-import { getCategoryAnalytics } from "../api"; // ✅ Import API function
+import { getCategoryAnalytics } from "../api"; // API function
 import "../styles/components.css";
-import SavingPotentialCalculator from "./SavingPotentialCalculator"; // ✅ Import calculator
 
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
-
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
+ChartJS.register(
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title
+);
 
 export default function CategoryAnalytics() {
   const [analytics, setAnalytics] = useState([]);
 
-    useEffect(() => {
-        getCategoryAnalytics()
+  useEffect(() => {
+    getCategoryAnalytics()
       .then((data) => setAnalytics(data))
       .catch((err) => console.error(err));
   }, []);
 
-  const categories = analytics.map(item => item.category);
-  const totals = analytics.map(item => item.total_amount);
+  const categories = analytics.map((item) => item.category);
+  const totals = analytics.map((item) => item.total_amount);
 
   const pieData = {
     labels: categories,
     datasets: [
       {
         data: totals,
-        backgroundColor: ["#4CAF50", "#FF9800", "#2196F3", "#F44336", "#9C27B0", "#00BCD4"],
+        backgroundColor: [
+          "#4CAF50",
+          "#FF9800",
+          "#2196F3",
+          "#F44336",
+          "#9C27B0",
+          "#00BCD4",
+        ],
         borderWidth: 1,
       },
     ],
@@ -65,14 +76,6 @@ export default function CategoryAnalytics() {
           <h3>Bar Chart</h3>
           <Bar data={barData} />
         </div>
-      
-    {/* ✅ Add SavingPotentialCalculator with fetched categories */}
-      <div className="calculator-section">
-        <div className="chart-card">
-                  <SavingPotentialCalculator categories={categories} />
-
-        </div>
-      </div>
       </div>
     </div>
   );

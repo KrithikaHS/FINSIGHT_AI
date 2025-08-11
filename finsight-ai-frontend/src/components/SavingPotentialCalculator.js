@@ -1,12 +1,28 @@
 import { useEffect, useState } from "react";
-import { getSavingPotential } from "../api";
+import { getCategoryAnalytics, getSavingPotential } from "../api";
 
-export default function SavingPotentialCalculator({ categories = [] }) {
+export default function SavingPotentialCalculator() {
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+
   const [category, setCategory] = useState("");
   const [percentage, setPercentage] = useState(10);
   const [result, setResult] = useState(null);
 
-  // Ensure we set the first category when data arrives
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const data = await getCategoryAnalytics();
+        setCategories(data.map(item => item.category));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    }
+    fetchCategories();
+  }, []);
+
   useEffect(() => {
     if (categories.length > 0) {
       setCategory(categories[0]);
@@ -22,9 +38,12 @@ export default function SavingPotentialCalculator({ categories = [] }) {
     }
   };
 
-  // If no categories yet, don't render the form
-  if (categories.length === 0) {
+  if (categoriesLoading) {
     return <p>Loading categories...</p>;
+  }
+
+  if (categories.length === 0) {
+    return <p>No categories available.</p>;
   }
 
   return (
@@ -46,6 +65,8 @@ export default function SavingPotentialCalculator({ categories = [] }) {
           type="number"
           value={percentage}
           onChange={(e) => setPercentage(Number(e.target.value))}
+          min="0"
+          max="100"
         />
       </div>
       <button onClick={calculate}>Calculate</button>

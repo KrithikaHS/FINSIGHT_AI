@@ -7,7 +7,7 @@ from .views import ForecastView, TrendsView
 from .views import RecommendationView, AlertView, HeatmapView
 from .views import RecurringExpenseListCreateView, RecurringExpenseDetailView
 from .views import CategoryAnalyticsView,top_expenses,spend_trends
-
+from .views import BudgetOptimizationView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -32,5 +32,6 @@ urlpatterns = [
     path("change-password/", change_password, name="change_password"),
     path("request-password-reset/", request_password_reset, name="request_password_reset"),
     path("reset-password/", reset_password_confirm, name="reset_password_confirm"),
+    path('budget-optimizer/', BudgetOptimizationView.as_view(), name='budget-optimizer'),
 
 ]

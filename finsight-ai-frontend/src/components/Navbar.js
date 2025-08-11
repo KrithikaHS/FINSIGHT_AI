@@ -31,7 +31,7 @@ export default function Navbar() {
 
         {/* Right: User Info & Logout */}
         <div className="navbar-user">
-          <button onClick={() => setShowProfile(true)} className="profile-btn">
+          <button  onClick={() => setShowProfile(true)} className="profile-btn">
             Profile
           </button>
           <button onClick={logout} className="logout-btn">
