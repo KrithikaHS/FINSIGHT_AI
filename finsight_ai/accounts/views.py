@@ -1,13 +1,39 @@
-from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from rest_framework import status
+from .models import RecurringExpense
+from .Serializers import RecurringExpenseSerializer
+from .models import Expense, Alert, Recommendation
+from prophet import Prophet
+from datetime import date, timedelta
+from django.db.models import Sum
+import pandas as pd
+
+from PIL import Image, ImageEnhance, ImageFilter
+import pytesseract
+import re
+from datetime import datetime
+from rest_framework import generics, permissions, status
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.views import APIView
+
+from .Serializers import ExpenseSerializer
+
+from django.db.models.functions import TruncWeek
+from django.utils.timezone import now
+from decimal import Decimal
+from accounts.utils.budget_optimization import (
+    get_budget_allocation,
+    forecast_category_spending,
+    get_current_month_spending,
+) 
+
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth import update_session_auth_hash
+
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.password_validation import validate_password, ValidationError
+
 from .Serializers import SignupSerializer
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .Serializers import MyTokenObtainPairSerializer
-
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.utils.http import urlsafe_base64_encode
@@ -16,7 +42,6 @@ from django.contrib.auth.tokens import default_token_generator
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework import status
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -46,14 +71,6 @@ def request_password_reset(request):
 
     return Response({"message": "If this email exists, a reset link has been sent."})
 
-from django.contrib.auth.models import User
-from django.utils.http import urlsafe_base64_decode
-from django.contrib.auth.tokens import default_token_generator
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth.password_validation import validate_password, ValidationError
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -97,15 +114,6 @@ def signup(request):
     else:
         print("Serializer errors:", serializer.errors)  # Debug print validation errors
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework import status
-from django.contrib.auth.models import User
-from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
 
 @api_view(["GET", "PUT"])
 @permission_classes([IsAuthenticated])
@@ -163,14 +171,6 @@ def change_password(request):
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
 
-from rest_framework import generics, permissions, status
-from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.response import Response
-from rest_framework.views import APIView
-
-from .models import Expense
-from .Serializers import ExpenseSerializer
-
 
 
 class ExpenseListCreateView(generics.ListCreateAPIView):
@@ -207,15 +207,6 @@ class ExpenseDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         return Expense.objects.filter(user=self.request.user)
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status, permissions
-from rest_framework.parsers import MultiPartParser, FormParser
-from PIL import Image, ImageEnhance, ImageFilter
-import pytesseract
-import re
-from datetime import datetime
-from .models import Expense  # Adjust import to your project structure
 
 class ReceiptUploadView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -327,15 +318,6 @@ class ReceiptUploadView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-from prophet import Prophet
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from datetime import date, timedelta
-from django.db.models import Sum
-from accounts.models import Expense
-import pandas as pd
-
 class ForecastView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -444,11 +426,6 @@ class TrendsView(APIView):
         return Response({
             "topCategories": trends
         })
-    
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from .models import Expense, Alert, Recommendation
 
 class RecommendationView(APIView):
     
@@ -507,12 +484,7 @@ class AlertView(APIView):
 
 
 # views.py
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from datetime import date, timedelta
-from django.db.models import Sum
-from .models import Expense
+
 
 class HeatmapView(APIView):
     permission_classes = [IsAuthenticated]
@@ -544,10 +516,6 @@ class HeatmapView(APIView):
         return Response(spend_list)
 
 
-from rest_framework import generics, permissions
-from .models import RecurringExpense
-from .Serializers import RecurringExpenseSerializer
-
 class RecurringExpenseListCreateView(generics.ListCreateAPIView):
     serializer_class = RecurringExpenseSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -566,11 +534,6 @@ class RecurringExpenseDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         return RecurringExpense.objects.filter(user=self.request.user)
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import Sum
-from .models import Expense
 
 class CategoryAnalyticsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -586,12 +549,7 @@ class CategoryAnalyticsView(APIView):
         print("Chart")
         print(data)
         return Response(data)
-    
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from django.db.models import Sum
-from .models import Expense
+
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -608,12 +566,6 @@ def top_expenses(request):
 
     return Response(top_data)
 
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from django.db.models import Sum
-from django.db.models.functions import TruncWeek
-from .models import Expense
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -661,11 +613,7 @@ def spend_trends(request):
     return Response(trends_list)
 
 
-from django.utils.timezone import now
-from datetime import timedelta
-from django.db.models import Sum
-from .models import Expense
-from decimal import Decimal
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def saving_potential(request):
@@ -695,14 +643,8 @@ def saving_potential(request):
 
 
 # accounts/views.py
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from accounts.utils.budget_optimization import (
-    get_budget_allocation,
-    forecast_category_spending,
-    get_current_month_spending,
-)
+
+
 
 class BudgetOptimizationView(APIView):
     permission_classes = [IsAuthenticated]
