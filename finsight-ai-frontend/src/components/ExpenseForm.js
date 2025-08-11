@@ -6,11 +6,28 @@ import "../styles/components.css";
 
 
 export default function ExpenseForm({ onCreated }) {
+    const categories = ["Food", "Travel", "Shopping", "Utilities", "Entertainment"];
+  const [customCategory, setCustomCategory] = useState("");
+
+  function handleCategoryChange(e) {
+    const val = e.target.value;
+    if (val === "Other") {
+      setForm({ ...form, category: customCategory });
+    } else {
+      setForm({ ...form, category: val });
+      setCustomCategory(""); // reset custom
+    }
+  }
+
+  function handleCustomChange(e) {
+    setCustomCategory(e.target.value);
+    setForm({ ...form, category: e.target.value });
+  }
   const [form, setForm] = useState({
     title: "",
     amount: "",
     date: formatISO(new Date(), { representation: "date" }),
-    category: "",
+    category: "Food",
     merchant: "",
     notes: "",
   });
@@ -18,9 +35,19 @@ export default function ExpenseForm({ onCreated }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
+        const title = form.title.trim() === "" ? "Expense" : form.title;
+
+  if (!form.category.trim()) {
+    alert("Category is required");
+    return;
+  }
+  if (!form.amount || isNaN(parseFloat(form.amount))) {
+    alert("Valid amount is required");
+    return;
+  }
     setLoading(true);
     try {
-      const payload = { ...form, amount: parseFloat(form.amount) };
+      const payload = { ...form,title, amount: parseFloat(form.amount) };
       await createExpense(payload);
       setForm({ title: "", amount: "", date: formatISO(new Date(), { representation: "date" }), category: "", merchant: "", notes: "" });
       onCreated && onCreated();
@@ -85,12 +112,32 @@ const [preview, setPreview] = useState(null);
       onChange={e => setForm({ ...form, merchant: e.target.value })}
       className="expense-form__input p-2 border rounded"
     />
-    <input
-      placeholder="Category (Food / Travel)"
-      value={form.category}
-      onChange={e => setForm({ ...form, category: e.target.value })}
-      className="expense-form__input p-2 border rounded"
-    />
+    <div>
+      <select
+        value={categories.includes(form.category) ? form.category : "Other"}
+        onChange={handleCategoryChange}
+        className="expense-form__input p-2 border rounded"
+      >
+        <option value="" disabled>
+          Select Category
+        </option>
+        {categories.map((cat) => (
+          <option key={cat} value={cat}>
+            {cat}
+          </option>
+        ))}
+        <option value="Other">Other</option>
+      </select>
+      {!categories.includes(form.category) && (
+        <input
+          type="text"
+          placeholder="Enter category"
+          value={customCategory}
+          onChange={handleCustomChange}
+          className="expense-form__input p-2 border rounded mt-2"
+        />
+      )}
+    </div>
   </div>
 
   <div className="expense-form__row expense-form__row--file-submit flex items-center gap-3">

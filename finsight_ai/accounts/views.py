@@ -327,26 +327,26 @@ class ReceiptUploadView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+from prophet import Prophet
 from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from datetime import date, timedelta
-from django.db.models import Sum, F
-from accounts.models import Expense  # Adjust import as needed
+from django.db.models import Sum
+from accounts.models import Expense
+import pandas as pd
 
 class ForecastView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        period = int(request.query_params.get('period', 30))
         user = request.user
+        period = int(request.query_params.get('period', 30))  # days to forecast
 
-        # Example logic: Return daily expense sums for the last `period` days + a simple forecast (e.g., moving average)
-
+        # Get historical daily expenses for past year
         end_date = date.today()
-        start_date = end_date - timedelta(days=period-1)
+        start_date = end_date - timedelta(days=365)
 
-        # Aggregate actual expenses per day
         expenses_qs = (
             Expense.objects.filter(user=user, date__range=[start_date, end_date])
             .values('date')
@@ -354,32 +354,47 @@ class ForecastView(APIView):
             .order_by('date')
         )
 
-        # Prepare data dict with all dates in period initialized to 0
-        date_list = [(start_date + timedelta(days=i)) for i in range(period)]
-        actual_dict = {d: 0 for d in date_list}
+        data = pd.DataFrame(list(expenses_qs))
+        if data.empty or len(data) < 2:
+            # No data, return empty forecast
+            dates = [(end_date + timedelta(days=i)).isoformat() for i in range(period)]
+            forecast = [0] * period
+            return Response({
+                "dates": dates,
+                "forecast": forecast,
+                "actual": [],
+                "actual_dates": [],
+            })
 
-        for entry in expenses_qs:
-            actual_dict[entry['date']] = float(entry['total'])
+        data.rename(columns={'date': 'ds', 'total': 'y'}, inplace=True)
+        data['ds'] = pd.to_datetime(data['ds'])  # Convert to datetime
 
-        actual = [actual_dict[d] for d in date_list]
-        dates = [d.isoformat() for d in date_list]
+        # Train Prophet model
+        model = Prophet(daily_seasonality=True)
+        model.fit(data)
 
-        # Simple forecast: moving average of last 7 days, or just repeat actual for demo
-        forecast = []
-        window_size = 7
-        for i in range(period):
-            if i < window_size:
-                avg = sum(actual[:i+1]) / (i+1)
-            else:
-                avg = sum(actual[i-window_size+1:i+1]) / window_size
-            forecast.append(round(avg, 2))
+        # Create future dataframe
+        future = model.make_future_dataframe(periods=period)
+        forecast_df = model.predict(future)
+
+        # Extract forecast for future dates only
+        forecast_data = forecast_df.tail(period)[['ds', 'yhat']]
+        forecast_data['ds'] = pd.to_datetime(forecast_data['ds'])  # Convert to datetime
+        dates = forecast_data['ds'].dt.date.astype(str).tolist()
+        forecast = forecast_data['yhat'].round(2).tolist()
+
+        # Get recent actual expenses for comparison
+        recent_actual = data.tail(period)
+        recent_actual['ds'] = pd.to_datetime(recent_actual['ds'])  # Convert to datetime
+        actual_dates = recent_actual['ds'].dt.date.astype(str).tolist()
+        actual_values = recent_actual['y'].tolist()
 
         return Response({
             "dates": dates,
-            "actual": actual,
-            "forecast": forecast
+            "forecast": forecast,
+            "actual": actual_values,
+            "actual_dates": actual_dates,
         })
-
 
 class TrendsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -436,50 +451,32 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Expense, Alert, Recommendation
 
 class RecommendationView(APIView):
+    
     permission_classes = [IsAuthenticated]
 
+    # def get(self, request):
+        # user = request.user
+        # print("User for Recomm :" )
+        # print(user)
+        # # Just fetch precomputed ML recommendations from DB — no recalculation here
+        # rec_objs = Recommendation.objects.filter(user=user).order_by('-id')  # latest first maybe
+        # rec_data = [{"id": r.id, "text": r.text} for r in rec_objs]
+        # print("REcomm : ")
+        # print(rec_data)
+        # print("Done")
+        # return Response(rec_data)
     def get(self, request):
         user = request.user
-        expenses = Expense.objects.filter(user=user)
+        print(f"User ID: {user.id}, Username: {user.username}")
 
-        # Clear old recommendations
-        Recommendation.objects.filter(user=user).delete()
-
-        # Simple logic: check if monthly subscriptions > 1000
-        subs_expenses = expenses.filter(category__iexact="subscriptions")
-        total_subs = sum(e.amount for e in subs_expenses)
-
-        recs = []
-        if total_subs > 100:
-            rec_text = "Move subscription payments to annual to save 10%"
-            recs.append(rec_text)
-            Recommendation.objects.create(user=user, text=rec_text)
-
-        # Example: if grocery expenses trending up (last month vs previous)
-        from django.utils.timezone import now
-        from datetime import timedelta
-
-        today = now().date()
-        last_month_start = today - timedelta(days=30)
-        prev_month_start = today - timedelta(days=60)
-        prev_month_end = last_month_start - timedelta(days=1)
-
-        last_month_grocery = expenses.filter(category__iexact="food", date__gte=last_month_start)
-        prev_month_grocery = expenses.filter(category__iexact="food", date__range=[prev_month_start, prev_month_end])
-
-        if last_month_grocery and prev_month_grocery:
-            last_sum = sum(e.amount for e in last_month_grocery)
-            prev_sum = sum(e.amount for e in prev_month_grocery)
-            if last_sum > prev_sum * 1.1:  # more than 10% increase
-                rec_text = "Grocery spending trending up — try a 10% budget cut"
-                recs.append(rec_text)
-                Recommendation.objects.create(user=user, text=rec_text)
-
-        # Return all recommendations from DB
         rec_objs = Recommendation.objects.filter(user=user)
-        rec_data = [{"id": r.id, "text": r.text} for r in rec_objs]
+        print(f"Recommendations found: {rec_objs.count()}")
+        for r in rec_objs:
+                print(f"Rec: {r.text}")
 
+        rec_data = [{"id": r.id, "text": r.text} for r in rec_objs]
         return Response(rec_data)
+
 
 
 class AlertView(APIView):
@@ -695,3 +692,55 @@ def saving_potential(request):
         "total_spent": total_spent,
         "potential_savings": round(savings, 2)
     })
+
+
+# accounts/views.py
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from accounts.utils.budget_optimization import (
+    get_budget_allocation,
+    forecast_category_spending,
+    get_current_month_spending,
+)
+
+class BudgetOptimizationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        monthly_budget = float(request.query_params.get("monthly_budget", 0))
+        saving_goal = float(request.query_params.get("saving_goal", 0))
+        if monthly_budget <= 0 or saving_goal < 0:
+            return Response({"error": "Invalid budget or saving goal"}, status=400)
+
+        allocated_budget, err = get_budget_allocation(user, monthly_budget, saving_goal)
+        if err:
+            return Response({"error": err}, status=400)
+
+        forecast = forecast_category_spending(user)
+        current_spending = get_current_month_spending(user)
+
+        # Compose response
+        response = []
+        for cat, budget in allocated_budget.items():
+            spent = current_spending.get(cat, 0)
+            forecasted = forecast.get(cat, [0]*30)  # default zeros if no forecast
+            forecast_sum = round(sum(forecasted), 2)
+
+            status = "ok"
+            if forecast_sum > budget:
+                status = "forecast_exceed"
+            elif spent > budget:
+                status = "spent_exceed"
+
+            response.append({
+                "category": cat,
+                "allocated_budget": budget,
+                "current_spent": round(spent, 2),
+                "forecasted_spend": forecast_sum,
+                "status": status,
+                "remaining_budget": round(budget - spent, 2),
+            })
+        print(response)
+        return Response({"results": response})

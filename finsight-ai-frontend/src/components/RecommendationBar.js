@@ -12,6 +12,7 @@ export default function RecommendationBar() {
       try {
         const user = JSON.parse(localStorage.getItem("user") || "{}");
         const res = await getRecommendations(user.id);
+        console.log("The ec",res)
         setRecs(res.slice(0,3));
       } catch (e) {
         // setRecs([

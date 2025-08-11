@@ -104,6 +104,7 @@ export async function getTrends(params = {}) {
 
 export async function getRecommendations(userId) {
   const res = await client.get(`/recommendations/`, { params: { user: userId } });
+  console.log("api: ",res.data)
   return res.data;
 }
 
@@ -185,6 +186,18 @@ export const getProfile = () => client.get("/profile/");
 export const updateProfile = (data) => client.put("/profile/", data);
 
 export const changePassword = (data) => client.post("/change-password/", data);
+
+
+
+export async function fetchBudgetOptimization(monthlyBudget, savingGoal) {
+  const res = await client.get("/budget-optimizer/", {
+    params: {
+      monthly_budget: monthlyBudget,
+      saving_goal: savingGoal,
+    },
+  });
+  return res.data;
+}
 
 
 export default client;
